@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MONITORAMENTO GASOTÉCNICA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --paper: #F1EEE6;
+    --panel: #FFFFFF;
+    --ink: #1B2426;
+    --ink-soft: #55635F;
+    --steel: #24404B;
+    --steel-deep: #16282F;
+    --teal: #4C7A80;
+    --line: #D8D2C4;
+    --amber: #C8842A;
+    --red: #B4432E;
+    --green: #4C7A55;
+    --focus: #24404B;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14181A;
+      --panel: #1C2225;
+      --ink: #E9E7E0;
+      --ink-soft: #9AA6A2;
+      --steel: #7FA6AF;
+      --steel-deep: #A9C6CC;
+      --teal: #7FA6AF;
+      --line: #303838;
+      --amber: #D89A4A;
+      --red: #D26A54;
+      --green: #6FA378;
+      --focus: #7FA6AF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14181A;
+    --panel: #1C2225;
+    --ink: #E9E7E0;
+    --ink-soft: #9AA6A2;
+    --steel: #7FA6AF;
+    --steel-deep: #A9C6CC;
+    --teal: #7FA6AF;
+    --line: #303838;
+    --amber: #D89A4A;
+    --red: #D26A54;
+    --green: #6FA378;
+    --focus: #7FA6AF;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100%;
+  }
+  html, body { height: 100%; }
+
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 28px 20px calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ---------- Header / gauge ---------- */
+  header.top {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--paper);
+    padding-bottom: 8px;
+  }
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 6px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hospital-logo {
+    height: 52px;
+    width: auto;
+    background: #16282F;
+    padding: 6px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    object-fit: contain;
+  }
+  .masthead h1 {
+    font-size: 1.35rem;
+    line-height: 1.2;
+    margin: 0 0 2px;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  .masthead .sub {
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    margin: 0;
+  }
+  .theme-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .theme-btn:hover { border-color: var(--steel); color: var(--ink); }
+
+  .gauge-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 18px 0 6px;
+    padding: 16px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .gauge-svg { flex-shrink: 0; width: 96px; height: 62px; }
+  .gauge-readout { font-family: 'IBM Plex Mono', monospace; }
+  .gauge-readout .n {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1;
+    display: block;
+  }
+  .gauge-readout .label {
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+  }
+  .gauge-meta {
+    margin-left: auto;
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* ---------- Nav tabs (sections) ---------- */
+  .section-nav {
+    display: flex;
+    gap: 6px;
+    margin: 20px 0 4px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .section-nav button {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.76rem;
+    padding: 10px 4px 10px;
+    margin-right: 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .section-nav button.active {
+    color: var(--ink);
+    border-bottom-color: var(--steel);
+    font-weight: 600;
+  }
+  .section-nav .badge {
+    background: var(--line);
+    color: var(--ink-soft);
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  .section-nav button.active .badge { background: var(--steel); color: var(--panel); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ---------- Forms (shared) ---------- */
+  form.card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 18px 0;
+  }
+  form.card h2 {
+    font-size: 0.95rem;
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+  .section-subtitle {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--steel);
+    margin: 14px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+  textarea { min-height: 58px; resize: vertical; }
+
+  .submit-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+  button.primary {
+    background: var(--steel);
+    color: var(--panel);
+    border: none;
+    border-radius: 7px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.primary:hover { background: var(--steel-deep); }
+
+  /* ---------- Filters ---------- */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 22px 0 12px;
+    flex-wrap: wrap;
+  }
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+  .tabs button {
+    border: none;
+    background: none;
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .tabs button.active { background: var(--steel); color: var(--panel); }
+  .search {
+    margin-left: auto;
+    min-width: 140px;
+    flex: 1;
+    max-width: 220px;
+  }
+  .search input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    color: var(--ink);
+    font-family: inherit;
+  }
+
+  /* ---------- Log entries ---------- */
+  .log { display: flex; flex-direction: column; gap: 10px; }
+  .entry {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 8px;
+    padding: 13px 14px;
+  }
+  .entry[data-priority="Crítica"] { border-left-color: var(--red); }
+  .entry[data-priority="Alta"] { border-left-color: var(--amber); }
+  .entry[data-priority="Média"] { border-left-color: var(--teal); }
+  .entry[data-priority="Baixa"] { border-left-color: var(--line); }
+
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .entry-place { font-weight: 600; font-size: 0.95rem; }
+  .entry-place .detalhe { font-weight: 400; color: var(--ink-soft); }
+  .entry-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .entry-desc { margin: 6px 0 10px; font-size: 0.9rem; color: var(--ink); line-height: 1.45; }
+  .entry-bottom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .tag.prio-Crítica { color: var(--red); border-color: var(--red); }
+  .tag.prio-Alta { color: var(--amber); border-color: var(--amber); }
+  .tag.prio-Média { color: var(--teal); border-color: var(--teal); }
+  .tag.status-Resolvida { color: var(--green); border-color: var(--green); }
+  .tag.status-Em.andamento { color: var(--steel); border-color: var(--steel); }
+
+  .entry-actions { margin-left: auto; display: flex; gap: 6px; }
+  .entry-actions button {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .entry-actions button:hover { border-color: var(--steel); color: var(--ink); }
+  .entry-actions button.danger:hover { border-color: var(--red); color: var(--red); }
+
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+
+  /* ---------- Cilindros vazios ---------- */
+  .cyl-summary {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0;
+    flex-wrap: wrap;
+  }
+  .cyl-chip {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    min-width: 100px;
+  }
+  .cyl-chip .n { font-size: 1.3rem; font-weight: 600; display: block; }
+  .cyl-chip .label { font-size: 0.68rem; color: var(--ink-soft); }
+
+  .cyl-entry.recolhido { opacity: 0.5; }
+  .cyl-entry.recolhido .entry-desc,
+  .cyl-entry.recolhido .entry-place { text-decoration: line-through; }
+
+  /* ---------- Leitura dos Tanques Grid ---------- */
+  .reading-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--paper);
+    border-radius: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+  }
+  .reading-item strong { display: block; font-size: 0.68rem; color: var(--ink-soft); font-weight: 500; }
+
+  /* ---------- Footer handover ---------- */
+  .handover {
+    margin-top: 26px;
+    display: flex;
+    justify-content: center;
+  }
+  .handover button {
+    background: none;
+    border: 1px solid var(--steel);
+    color: var(--steel);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+  }
+  .handover button:hover { background: var(--steel); color: var(--panel); }
+  .toast {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--steel-deep);
+    color: var(--panel);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 580px) {
+    .row2, .row3 { grid-template-columns: 1fr; }
+    .gauge-meta { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="masthead">
+      <div class="brand">
+        <img src="logo.png" alt="Logo Hospital" class="hospital-logo" onerror="this.onerror=null; this.src='LOGO_IFF_Branco (1).png';">
+        <div>
+          <h1>MONITORAMENTO GASOTÉCNICA</h1>
+          <p class="sub">Pendências e leitura de sistemas de gases</p>
+        </div>
+      </div>
+      <button class="theme-btn" id="themeBtn" type="button">modo escuro</button>
+    </div>
+
+    <div class="gauge-row">
+      <svg class="gauge-svg" viewBox="0 0 100 62" id="gaugeSvg">
+        <path d="M8,54 A42,42 0 0,1 92,54" fill="none" stroke="var(--line)" stroke-width="8" stroke-linecap="round"/>
+        <path id="gaugeArc" d="M8,54 A42,42 0 0,1 92,54" fill="none" stroke="var(--teal)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 132"/>
+        <g id="needle" transform="rotate(0 50 54)">
+          <line x1="50" y1="54" x2="50" y2="20" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="50" cy="54" r="4" fill="var(--ink)"/>
+        </g>
+      </svg>
+      <div class="gauge-readout">
+        <span class="n" id="openCount">0</span>
+        <span class="label">pendências em aberto</span>
+      </div>
+      <div class="gauge-meta" id="gaugeMeta">0 críticas · 0 resolvidas hoje</div>
+    </div>
+
+    <nav class="section-nav" id="sectionNav">
+      <button data-section="pendencias" class="active">pendências <span class="badge" id="badgePend">0</span></button>
+      <button data-section="tanques">leitura dos tanques <span class="badge" id="badgeTanques">0</span></button>
+      <button data-section="cilindros">cilindros vazios <span class="badge" id="badgeCyl">0</span></button>
+      <button data-section="ocorrencias">ocorrências <span class="badge" id="badgeOcc">0</span></button>
+    </nav>
+  </header>
+
+  <!-- ===================== PENDÊNCIAS ===================== -->
+  <section class="panel active" id="panel-pendencias">
+    <form id="addForm" class="card">
+      <h2>Nova pendência</h2>
+      <div class="row2">
+        <div class="field">
+          <label for="sistema">Sistema / Local</label>
+          <input type="text" id="sistema" placeholder="Informe o sistema ou setor (ex: Tanque O2, Leito 12...)" required>
+        </div>
+        <div class="field">
+          <label for="priority">Prioridade</label>
+          <select id="priority">
+            <option>Baixa</option>
+            <option selected>Média</option>
+            <option>Alta</option>
+            <option>Crítica</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="detalhe">Detalhe adicional (opcional)</label>
+        <input type="text" id="detalhe" placeholder="Ex.: painel externo, manômetro secundário, régua leito 04">
+      </div>
+      <div class="field">
+        <label for="desc">Descrição da pendência</label>
+        <textarea id="desc" placeholder="O que precisa ser verificado, ajustado ou resolvido" required></textarea>
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="primary">Registrar pendência</button>
+      </div>
+    </form>
+
+    <div class="filters">
+      <div class="tabs" id="tabsPend">
+        <button data-filter="Todas" class="active">todas</button>
+        <button data-filter="Pendente">pendentes</button>
+        <button data-filter="Em andamento">em andamento</button>
+        <button data-filter="Resolvida">resolvidas</button>
+      </div>
+      <div class="search">
+        <input type="text" id="searchInput" placeholder="Buscar…">
+      </div>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <div class="handover">
+      <button id="handoverBtn" type="button">copiar resumo para passagem de plantão</button>
+    </div>
+  </section>
+
+  <!-- ===================== LEITURA DOS TANQUES E MÓDULOS ===================== -->
+  <section class="panel" id="panel-tanques">
+    <form id="tankForm" class="card">
+      <h2>Nova leitura de tanques e módulos</h2>
+      <div class="row2">
+        <div class="field">
+          <label for="tankTecnico">Técnico responsável</label>
+          <input type="text" id="tankTecnico" placeholder="Nome do técnico" required>
+        </div>
+        <div class="field">
+          <label for="tankTurno">Turno</label>
+          <select id="tankTurno">
+            <option>Diurno (07h - 19h)</option>
+            <option>Noturno (19h - 07h)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-subtitle">Tanque O₂ e Reserva</div>
+      <div class="row3">
+        <div class="field">
+          <label for="tankO2Pol">Tanque O₂ (Polegadas)</label>
+          <input type="number" id="tankO2Pol" min="0" step="0.1" placeholder="Ex:160" required>
+        </div>
+        <div class="field">
+          <label for="tankO2Bar">Tanque O₂ (Bar)</label>
+          <input type="number" id="tankO2Bar" min="0" step="0.1" placeholder="Ex: 9" required>
+        </div>
+        <div class="field">
+          <label for="tankO2Reserva">Reserva O₂ (Bar)</label>
+          <input type="number" id="tankO2Reserva" min="0" step="0.1" placeholder="Ex: 150" required>
+        </div>
+      </div>
+
+      <div class="section-subtitle">Tanque Nitroso</div>
+      <div class="row2">
+        <div class="field">
+          <label for="tankN2OPol">Tanque N₂O (Polegadas)</label>
+          <input type="number" id="tankN2OPol" min="0" step="0.1" placeholder="Ex: 36" required>
+        </div>
+        <div class="field">
+          <label for="tankN2OBar">Tanque N₂O (Bar)</label>
+          <input type="number" id="tankN2OBar" min="0" step="0.1" placeholder="Ex: 10" required>
+        </div>
+      </div>
+
+      <div class="section-subtitle">Módulos de Ar Medicinal e Vácuo</div>
+      <div class="row2">
+        <div class="field">
+          <label for="tankAr">Módulo Ar Medicinal</label>
+          <input type="text" id="tankAr" placeholder="Ex: OK, em operação, em falha..." required>
+        </div>
+        <div class="field">
+          <label for="tankVacuo">Módulo Vácuo</label>
+          <input type="text" id="tankVacuo" placeholder="Ex: OK, em operação, em falha..." required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="tankModulosObs">Observações dos Módulos</label>
+        <input type="text" id="tankModulosObs" placeholder="Ex.: compressores alternando normalmente, bombas de vácuo sem alteração...">
+      </div>
+
+      <div class="submit-row">
+        <button type="submit" class="primary">Salvar leitura</button>
+      </div>
+    </form>
+
+    <div class="log" id="tankLog"></div>
+  </section>
+
+  <!-- ===================== CILINDROS VAZIOS ===================== -->
+  <section class="panel" id="panel-cilindros">
+    <form id="cylForm" class="card">
+      <h2>Registrar cilindro vazio</h2>
+      <div class="row3">
+        <div class="field">
+          <label for="cylGas">Gás</label>
+          <select id="cylGas">
+            <option>O2</option>
+            <option>N2O</option>
+            <option>Ar medicinal</option>
+            <option>CO2</option>
+            <option>Heliox</option>
+            <option>Óxido Nítrico</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cylQty">Quantidade</label>
+          <input type="number" id="cylQty" min="1" value="1">
+        </div>
+        <div class="field">
+          <label for="cylLocal">Local (opcional)</label>
+          <input type="text" id="cylLocal" placeholder="Ex.: depósito, bloco B">
+        </div>
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="primary">Registrar cilindro(s)</button>
+      </div>
+    </form>
+
+    <div class="cyl-summary" id="cylSummary"></div>
+
+    <div class="log" id="cylLog"></div>
+  </section>
+
+  <!-- ===================== OCORRÊNCIAS ===================== -->
+  <section class="panel" id="panel-ocorrencias">
+    <form id="occForm" class="card">
+      <h2>Registrar ocorrência</h2>
+      <div class="field">
+        <label for="occText">O que aconteceu</label>
+        <textarea id="occText" placeholder="Relate a ocorrência: falha, acionamento de alarme, visita técnica, etc." required></textarea>
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="primary">Registrar ocorrência</button>
+      </div>
+    </form>
+
+    <div class="log" id="occLog"></div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var STORE_KEY = 'gasoterapia_registro_v5';
+  var OLD_KEY_V4 = 'gasoterapia_registro_v4';
+  var THEME_KEY = 'gasoterapia_theme_v1';
+
+  function loadData() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+
+    try {
+      var oldV4 = localStorage.getItem(OLD_KEY_V4);
+      if (oldV4) return JSON.parse(oldV4);
+    } catch (e) {}
+
+    return { pendencias: [], cilindros: [], ocorrencias: [], leituras: [] };
+  }
+
+  function saveData() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    } catch (e) {
+      showToast('Não foi possível salvar neste navegador.');
+    }
+  }
+
+  var data = loadData();
+  var currentFilter = 'Todas';
+
+  // ---- tema ----
+  var themeBtn = document.getElementById('themeBtn');
+  function applyTheme(t) {
+    if (t === 'dark' || t === 'light') {
+      document.documentElement.setAttribute('data-theme', t);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    themeBtn.textContent = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'modo claro' : 'modo escuro';
+  }
+  (function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+    applyTheme(saved);
+  })();
+  themeBtn.addEventListener('click', function () {
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  // ---- toast ----
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtTime(iso) {
+    var d = new Date(iso);
+    var day = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    var time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return day + ' · ' + time;
+  }
+
+  // ---- navegação por abas ----
+  document.getElementById('sectionNav').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var section = btn.getAttribute('data-section');
+    Array.prototype.forEach.call(document.querySelectorAll('#sectionNav button'), function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.panel'), function (p) {
+      p.classList.toggle('active', p.id === 'panel-' + section);
+    });
+  });
+
+  function updateBadges() {
+    var openPend = data.pendencias.filter(function (e) { return e.status !== 'Resolvida'; }).length;
+    var openCyl = data.cilindros.filter(function (c) { return !c.recolhido; }).length;
+    document.getElementById('badgePend').textContent = openPend;
+    document.getElementById('badgeTanques').textContent = (data.leituras || []).length;
+    document.getElementById('badgeCyl').textContent = openCyl;
+    document.getElementById('badgeOcc').textContent = data.ocorrencias.length;
+  }
+
+  // ---- gauge ----
+  function updateGauge() {
+    var open = data.pendencias.filter(function (e) { return e.status !== 'Resolvida'; }).length;
+    var critical = data.pendencias.filter(function (e) { return e.status !== 'Resolvida' && e.priority === 'Crítica'; }).length;
+    var todayStr = new Date().toDateString();
+    var resolvedToday = data.pendencias.filter(function (e) {
+      return e.status === 'Resolvida' && e.resolvedAt && new Date(e.resolvedAt).toDateString() === todayStr;
+    }).length;
+
+    document.getElementById('openCount').textContent = open;
+    document.getElementById('gaugeMeta').textContent = critical + ' crítica' + (critical === 1 ? '' : 's') + ' · ' + resolvedToday + ' resolvida' + (resolvedToday === 1 ? '' : 's') + ' hoje';
+
+    var capped = Math.min(open, 12);
+    var frac = capped / 12;
+    var arcLen = 132;
+    document.getElementById('gaugeArc').setAttribute('stroke-dasharray', (frac * arcLen) + ' ' + arcLen);
+    document.getElementById('gaugeArc').style.stroke = frac < 0.34 ? 'var(--green)' : (frac < 0.7 ? 'var(--amber)' : 'var(--red)');
+    var angle = -90 + frac * 180;
+    document.getElementById('needle').setAttribute('transform', 'rotate(' + angle + ' 50 54)');
+  }
+
+  // =================== PENDÊNCIAS ===================
+  var logEl = document.getElementById('log');
+  var searchInput = document.getElementById('searchInput');
+
+  function renderPendencias() {
+    var term = searchInput.value.trim().toLowerCase();
+    var list = data.pendencias.slice().sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+
+    if (currentFilter !== 'Todas') {
+      list = list.filter(function (e) { return e.status === currentFilter; });
+    }
+    if (term) {
+      list = list.filter(function (e) {
+        return (e.sistema + ' ' + e.detalhe + ' ' + e.desc).toLowerCase().indexOf(term) !== -1;
+      });
+    }
+
+    if (list.length === 0) {
+      logEl.innerHTML = '<div class="empty">Nenhuma pendência aqui. Registre uma acima ou ajuste o filtro.</div>';
+    } else {
+      logEl.innerHTML = list.map(function (e) {
+        var statusClass = 'status-' + e.status.replace(/\s+/g, '.');
+        var nextLabel = e.status === 'Pendente' ? 'iniciar' : (e.status === 'Em andamento' ? 'resolver' : 'reabrir');
+        var detalheHtml = e.detalhe ? ' <span class="detalhe">— ' + escapeHtml(e.detalhe) + '</span>' : '';
+        return '' +
+          '<div class="entry" data-priority="' + e.priority + '" data-id="' + e.id + '">' +
+            '<div class="entry-top">' +
+              '<span class="entry-place">' + escapeHtml(e.sistema) + detalheHtml + '</span>' +
+              '<span class="entry-time">' + fmtTime(e.createdAt) + '</span>' +
+            '</div>' +
+            '<div class="entry-desc">' + escapeHtml(e.desc) + '</div>' +
+            '<div class="entry-bottom">' +
+              '<span class="tag prio-' + e.priority + '">' + e.priority + '</span>' +
+              '<span class="tag ' + statusClass + '">' + e.status + '</span>' +
+              '<span class="entry-actions">' +
+                '<button data-action="advance">' + nextLabel + '</button>' +
+                '<button data-action="delete" class="danger">excluir</button>' +
+              '</span>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+    updateGauge();
+    updateBadges();
+  }
+
+  document.getElementById('addForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var sistema = document.getElementById('sistema').value.trim();
+    var detalhe = document.getElementById('detalhe').value.trim();
+    var desc = document.getElementById('desc').value.trim();
+    var priority = document.getElementById('priority').value;
+    if (!sistema || !desc) return;
+
+    data.pendencias.push({
+      id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
+      sistema: sistema,
+      detalhe: detalhe,
+      desc: desc,
+      priority: priority,
+      status: 'Pendente',
+      createdAt: new Date().toISOString(),
+      resolvedAt: null
+    });
+    saveData();
+    this.reset();
+    document.getElementById('priority').value = 'Média';
+    renderPendencias();
+    showToast('Pendência registrada.');
+  });
+
+  document.getElementById('tabsPend').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    currentFilter = btn.getAttribute('data-filter');
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+    renderPendencias();
+  });
+  searchInput.addEventListener('input', renderPendencias);
+
+  logEl.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var entryEl = btn.closest('.entry');
+    var id = entryEl.getAttribute('data-id');
+    var entry = data.pendencias.find(function (e) { return e.id === id; });
+    if (!entry) return;
+
+    var action = btn.getAttribute('data-action');
+    if (action === 'delete') {
+      if (confirm('Excluir esta pendência?')) {
+        data.pendencias = data.pendencias.filter(function (e) { return e.id !== id; });
+        saveData();
+        renderPendencias();
+        showToast('Pendência excluída.');
+      }
+    } else if (action === 'advance') {
+      if (entry.status === 'Pendente') {
+        entry.status = 'Em andamento';
+      } else if (entry.status === 'Em andamento') {
+        entry.status = 'Resolvida';
+        entry.resolvedAt = new Date().toISOString();
+      } else {
+        entry.status = 'Pendente';
+        entry.resolvedAt = null;
+      }
+      saveData();
+      renderPendencias();
+    }
+  });
+
+  document.getElementById('handoverBtn').addEventListener('click', function () {
+    var open = data.pendencias.filter(function (e) { return e.status !== 'Resolvida'; })
+      .sort(function (a, b) {
+        var order = { 'Crítica': 0, 'Alta': 1, 'Média': 2, 'Baixa': 3 };
+        return order[a.priority] - order[b.priority];
+      });
+    var openCyl = data.cilindros.filter(function (c) { return !c.recolhido; });
+    var latestTank = (data.leituras && data.leituras.length > 0) ? data.leituras[data.leituras.length - 1] : null;
+
+    if (open.length === 0 && openCyl.length === 0 && !latestTank) {
+      showToast('Nada em aberto para copiar.');
+      return;
+    }
+
+    var lines = ['Passagem de plantão — ' + new Date().toLocaleDateString('pt-BR'), ''];
+
+    if (latestTank) {
+      lines.push('ÚLTIMA LEITURA DOS TANQUES (' + fmtTime(latestTank.createdAt) + ' — ' + latestTank.tecnico + ' / ' + latestTank.turno + '):');
+      lines.push('  • Tanque O₂: ' + (latestTank.o2Pol || '--') + ' pol / ' + (latestTank.o2Bar || '--') + ' bar | Reserva O₂: ' + (latestTank.o2Reserva || '--') + ' bar');
+      lines.push('  • Tanque N₂O: ' + (latestTank.n2oPol || '--') + ' pol / ' + (latestTank.n2oBar || '--') + ' bar');
+      lines.push('  • Módulo Ar Medicinal: ' + (latestTank.ar || '--') + ' | Módulo Vácuo: ' + (latestTank.vacuo || '--'));
+      if (latestTank.modulosObs) lines.push('  • Obs. Módulos: ' + latestTank.modulosObs);
+      lines.push('');
+    }
+
+    if (open.length) {
+      lines.push('PENDÊNCIAS:');
+      open.forEach(function (e) {
+        var det = e.detalhe ? ' (' + e.detalhe + ')' : '';
+        lines.push('[' + e.priority.toUpperCase() + ' · ' + e.status + '] ' + e.sistema + det);
+        lines.push('  ' + e.desc);
+      });
+      lines.push('');
+    }
+
+    if (openCyl.length) {
+      lines.push('CILINDROS VAZIOS:');
+      openCyl.forEach(function (c) {
+        var loc = c.local ? ' — ' + c.local : '';
+        lines.push('  ' + c.qty + 'x ' + c.gas + loc);
+      });
+    }
+
+    var text = lines.join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast('Resumo copiado para a área de transferência.');
+      }).catch(function () {
+        showToast('Não foi possível copiar automaticamente.');
+      });
+    } else {
+      showToast('Cópia automática indisponível neste navegador.');
+    }
+  });
+
+  // =================== LEITURA DOS TANQUES ===================
+  var tankLogEl = document.getElementById('tankLog');
+
+  function renderTanques() {
+    var list = (data.leituras || []).slice().sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+
+    if (list.length === 0) {
+      tankLogEl.innerHTML = '<div class="empty">Nenhuma leitura registrada até o momento.</div>';
+    } else {
+      tankLogEl.innerHTML = list.map(function (t) {
+        var modObsHtml = t.modulosObs ? '<div class="entry-desc" style="margin-top:6px;"><strong>Obs. Módulos:</strong> ' + escapeHtml(t.modulosObs) + '</div>' : '';
+
+        return '' +
+          '<div class="entry" data-id="' + t.id + '">' +
+            '<div class="entry-top">' +
+              '<span class="entry-place">' + escapeHtml(t.tecnico) + ' <span class="detalhe">— ' + escapeHtml(t.turno) + '</span></span>' +
+              '<span class="entry-time">' + fmtTime(t.createdAt) + '</span>' +
+            '</div>' +
+            '<div class="reading-grid">' +
+              '<div class="reading-item"><strong>O₂ TANQUE</strong>' + (t.o2Pol || '--') + ' pol | ' + (t.o2Bar || '--') + ' bar</div>' +
+              '<div class="reading-item"><strong>O₂ RESERVA</strong>' + (t.o2Reserva || '--') + ' bar</div>' +
+              '<div class="reading-item"><strong>N₂O TANQUE</strong>' + (t.n2oPol || '--') + ' pol | ' + (t.n2oBar || '--') + ' bar</div>' +
+              '<div class="reading-item"><strong>AR MEDICINAL</strong>' + escapeHtml(t.ar || '--') + '</div>' +
+              '<div class="reading-item"><strong>MÓDULO VÁCUO</strong>' + escapeHtml(t.vacuo || '--') + '</div>' +
+            '</div>' +
+            modObsHtml +
+            '<div class="entry-bottom" style="margin-top:8px;">' +
+              '<span class="entry-actions">' +
+                '<button data-action="delete" class="danger">excluir</button>' +
+              '</span>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+    updateBadges();
+  }
+
+  document.getElementById('tankForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var tecnico = document.getElementById('tankTecnico').value.trim();
+    var turno = document.getElementById('tankTurno').value;
+    var o2Pol = parseFloat(document.getElementById('tankO2Pol').value);
+    var o2Bar = parseFloat(document.getElementById('tankO2Bar').value);
+    var o2Reserva = parseFloat(document.getElementById('tankO2Reserva').value);
+    var n2oPol = parseFloat(document.getElementById('tankN2OPol').value);
+    var n2oBar = parseFloat(document.getElementById('tankN2OBar').value);
+    var ar = document.getElementById('tankAr').value.trim();
+    var vacuo = document.getElementById('tankVacuo').value.trim();
+    var modulosObs = document.getElementById('tankModulosObs').value.trim();
+
+    if (!data.leituras) data.leituras = [];
+
+    data.leituras.push({
+      id: 't' + Date.now() + Math.floor(Math.random() * 1000),
+      tecnico: tecnico,
+      turno: turno,
+      o2Pol: o2Pol,
+      o2Bar: o2Bar,
+      o2Reserva: o2Reserva,
+      n2oPol: n2oPol,
+      n2oBar: n2oBar,
+      ar: ar,
+      vacuo: vacuo,
+      modulosObs: modulosObs,
+      createdAt: new Date().toISOString()
+    });
+
+    saveData();
+    this.reset();
+    renderTanques();
+    showToast('Leitura salva com sucesso.');
+  });
+
+  tankLogEl.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var entryEl = btn.closest('.entry');
+    var id = entryEl.getAttribute('data-id');
+    if (btn.getAttribute('data-action') === 'delete') {
+      if (confirm('Excluir esta leitura?')) {
+        data.leituras = data.leituras.filter(function (t) { return t.id !== id; });
+        saveData();
+        renderTanques();
+        showToast('Leitura excluída.');
+      }
+    }
+  });
+
+  // =================== CILINDROS VAZIOS ===================
+  var cylLogEl = document.getElementById('cylLog');
+  var cylSummaryEl = document.getElementById('cylSummary');
+
+  function renderCilindros() {
+    var open = data.cilindros.filter(function (c) { return !c.recolhido; });
+    var totals = {};
+    open.forEach(function (c) { totals[c.gas] = (totals[c.gas] || 0) + c.qty; });
+
+    var chips = Object.keys(totals).map(function (gas) {
+      return '<div class="cyl-chip"><span class="n">' + totals[gas] + '</span><span class="label">' + escapeHtml(gas) + ' vazio(s)</span></div>';
+    });
+    cylSummaryEl.innerHTML = chips.length ? chips.join('') : '';
+
+    var list = data.cilindros.slice().sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+
+    if (list.length === 0) {
+      cylLogEl.innerHTML = '<div class="empty">Nenhum cilindro vazio registrado.</div>';
+    } else {
+      cylLogEl.innerHTML = list.map(function (c) {
+        var loc = c.local ? ' <span class="detalhe">— ' + escapeHtml(c.local) + '</span>' : '';
+        return '' +
+          '<div class="entry cyl-entry' + (c.recolhido ? ' recolhido' : '') + '" data-id="' + c.id + '">' +
+            '<div class="entry-top">' +
+              '<span class="entry-place">' + c.qty + 'x ' + escapeHtml(c.gas) + loc + '</span>' +
+              '<span class="entry-time">' + fmtTime(c.createdAt) + '</span>' +
+            '</div>' +
+            '<div class="entry-bottom">' +
+              '<span class="tag">' + (c.recolhido ? 'recolhido' : 'aguardando troca') + '</span>' +
+              '<span class="entry-actions">' +
+                '<button data-action="toggle">' + (c.recolhido ? 'reabrir' : 'marcar recolhido') + '</button>' +
+                '<button data-action="delete" class="danger">excluir</button>' +
+              '</span>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+    updateBadges();
+  }
+
+  document.getElementById('cylForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var gas = document.getElementById('cylGas').value;
+    var qty = parseInt(document.getElementById('cylQty').value, 10) || 1;
+    var local = document.getElementById('cylLocal').value.trim();
+
+    data.cilindros.push({
+      id: 'c' + Date.now() + Math.floor(Math.random() * 1000),
+      gas: gas,
+      qty: qty,
+      local: local,
+      createdAt: new Date().toISOString(),
+      recolhido: false
+    });
+    saveData();
+    this.reset();
+    document.getElementById('cylQty').value = 1;
+    renderCilindros();
+    showToast('Cilindro(s) registrado(s).');
+  });
+
+  cylLogEl.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var entryEl = btn.closest('.entry');
+    var id = entryEl.getAttribute('data-id');
+    var item = data.cilindros.find(function (c) { return c.id === id; });
+    if (!item) return;
+
+    var action = btn.getAttribute('data-action');
+    if (action === 'delete') {
+      if (confirm('Excluir este registro?')) {
+        data.cilindros = data.cilindros.filter(function (c) { return c.id !== id; });
+        saveData();
+        renderCilindros();
+        showToast('Registro excluído.');
+      }
+    } else if (action === 'toggle') {
+      item.recolhido = !item.recolhido;
+      saveData();
+      renderCilindros();
+    }
+  });
+
+  // =================== OCORRÊNCIAS ===================
+  var occLogEl = document.getElementById('occLog');
+
+  function renderOcorrencias() {
+    var list = data.ocorrencias.slice().sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+
+    if (list.length === 0) {
+      occLogEl.innerHTML = '<div class="empty">Nenhuma ocorrência registrada.</div>';
+    } else {
+      occLogEl.innerHTML = list.map(function (o) {
+        return '' +
+          '<div class="entry occ-entry" data-id="' + o.id + '">' +
+            '<div class="entry-top">' +
+              '<span class="entry-time">' + fmtTime(o.createdAt) + '</span>' +
+            '</div>' +
+            '<div class="entry-desc">' + escapeHtml(o.texto) + '</div>' +
+            '<div class="entry-bottom">' +
+              '<span class="entry-actions">' +
+                '<button data-action="delete" class="danger">excluir</button>' +
+              '</span>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+    updateBadges();
+  }
+
+  document.getElementById('occForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var texto = document.getElementById('occText').value.trim();
+    if (!texto) return;
+
+    data.ocorrencias.push({
+      id: 'o' + Date.now() + Math.floor(Math.random() * 1000),
+      texto: texto,
+      createdAt: new Date().toISOString()
+    });
+    saveData();
+    this.reset();
+    renderOcorrencias();
+    showToast('Ocorrência registrada.');
+  });
+
+  occLogEl.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var entryEl = btn.closest('.entry');
+    var id = entryEl.getAttribute('data-id');
+    if (btn.getAttribute('data-action') === 'delete') {
+      if (confirm('Excluir esta ocorrência?')) {
+        data.ocorrencias = data.ocorrencias.filter(function (o) { return o.id !== id; });
+        saveData();
+        renderOcorrencias();
+        showToast('Ocorrência excluída.');
+      }
+    }
+  });
+
+  renderPendencias();
+  renderTanques();
+  renderCilindros();
+  renderOcorrencias();
+})();
+</script>
+</body>
+</html>
