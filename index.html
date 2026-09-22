@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MONITORAMENTO GASOTÉCNICA IFF <title>
+<title>MONITORAMENTO GASOTÉCNICA IFF</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -469,7 +469,8 @@
       <div class="brand">
         <img src="Logo.png" alt="Logo Hospital" class="hospital-logo" onerror="if (this.src.includes('Logo.png')) { this.src='logo.png'; } else if (this.src.includes('logo.png')) { this.src='LOGO_IFF_Branco (1).png'; }">
         <div>
-          <h1>MONITORAMENTO GASOTÉCNICA</h1>
+          <!-- Título atualizado com IFF no final -->
+          <h1>MONITORAMENTO GASOTÉCNICA IFF</h1>
           <p class="sub">Pendências e leitura de sistemas de gases</p>
         </div>
       </div>
@@ -589,7 +590,7 @@
       <div class="row2">
         <div class="field">
           <label for="tankN2OPol">Tanque N₂O (Polegadas)</label>
-          <input type="number" id="tankN2OPol" min="0" step="0.1" placeholder="Ex: 36" required>
+          <input type="number" id="tankN2OPol" min="0" step="0.1" placeholder="Ex:36" required>
         </div>
         <div class="field">
           <label for="tankN2OBar">Tanque N₂O (Bar)</label>
@@ -683,61 +684,38 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Carregamento das Bibliotecas do Firebase (Compatibilidade) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
 <script>
 (function () {
+  var STORE_KEY = 'gasoterapia_registro_v5';
+  var OLD_KEY_V4 = 'gasoterapia_registro_v4';
   var THEME_KEY = 'gasoterapia_theme_v1';
 
-  // COLE AQUI AS SUAS CHAVES DO FIREBASE COPIADAS DO CONSOLE
-  var firebaseConfig = {
-    apiKey: "SUA_API_KEY_AQUI",
-    authDomain: "monitoramento-gasotecnica.firebaseapp.com",
-    projectId: "monitoramento-gasotecnica",
-    storageBucket: "monitoramento-gasotecnica.appspot.com",
-    messagingSenderId: "SUA_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
+  function loadData() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
 
-  // Inicialização do Firebase e Firestore
-  firebase.initializeApp(firebaseConfig);
-  var db = firebase.firestore();
+    try {
+      var oldV4 = localStorage.getItem(OLD_KEY_V4);
+      if (oldV4) return JSON.parse(oldV4);
+    } catch (e) {}
 
-  var data = { pendencias: [], cilindros: [], ocorrencias: [], leituras: [] };
-  var currentFilter = 'Todas';
-
-  // ---- Sincronização em Tempo Real (Escuta alterações no Banco) ----
-  db.collection("gasotecnica").doc("dados").onSnapshot(function(doc) {
-    if (doc.exists) {
-      data = doc.data();
-      if (!data.pendencias) data.pendencias = [];
-      if (!data.cilindros) data.cilindros = [];
-      if (!data.ocorrencias) data.ocorrencias = [];
-      if (!data.leituras) data.leituras = [];
-      
-      renderPendencias();
-      renderTanques();
-      renderCilindros();
-      renderOcorrencias();
-    }
-  }, function(error) {
-    console.error("Erro na escuta do Firebase: ", error);
-  });
-
-  function saveData() {
-    db.collection("gasotecnica").doc("dados").set(data)
-      .then(function() {
-        console.log("Dados salvos no Firebase.");
-      })
-      .catch(function(error) {
-        showToast('Erro ao sincronizar dados na nuvem.');
-        console.error("Erro ao salvar no Firebase: ", error);
-      });
+    return { pendencias: [], cilindros: [], ocorrencias: [], leituras: [] };
   }
 
-  // ---- Tema ----
+  function saveData() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    } catch (e) {
+      showToast('Não foi possível salvar neste navegador.');
+    }
+  }
+
+  var data = loadData();
+  var currentFilter = 'Todas';
+
+  // ---- tema ----
   var themeBtn = document.getElementById('themeBtn');
   function applyTheme(t) {
     if (t === 'dark' || t === 'light') {
@@ -759,7 +737,7 @@
     try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
   });
 
-  // ---- Toast ----
+  // ---- toast ----
   var toastEl = document.getElementById('toast');
   var toastTimer = null;
   function showToast(msg) {
@@ -781,7 +759,7 @@
     return day + ' · ' + time;
   }
 
-  // ---- Navegação por abas ----
+  // ---- navegação por abas ----
   document.getElementById('sectionNav').addEventListener('click', function (ev) {
     var btn = ev.target.closest('button');
     if (!btn) return;
@@ -803,7 +781,7 @@
     document.getElementById('badgeOcc').textContent = data.ocorrencias.length;
   }
 
-  // ---- Gauge ----
+  // ---- gauge ----
   function updateGauge() {
     var open = data.pendencias.filter(function (e) { return e.status !== 'Resolvida'; }).length;
     var critical = data.pendencias.filter(function (e) { return e.status !== 'Resolvida' && e.priority === 'Crítica'; }).length;
@@ -891,6 +869,7 @@
     saveData();
     this.reset();
     document.getElementById('priority').value = 'Média';
+    renderPendencias();
     showToast('Pendência registrada.');
   });
 
@@ -918,6 +897,7 @@
       if (confirm('Excluir esta pendência?')) {
         data.pendencias = data.pendencias.filter(function (e) { return e.id !== id; });
         saveData();
+        renderPendencias();
         showToast('Pendência excluída.');
       }
     } else if (action === 'advance') {
@@ -931,6 +911,7 @@
         entry.resolvedAt = null;
       }
       saveData();
+      renderPendencias();
     }
   });
 
@@ -1059,6 +1040,7 @@
 
     saveData();
     this.reset();
+    renderTanques();
     showToast('Leitura salva com sucesso.');
   });
 
@@ -1071,6 +1053,7 @@
       if (confirm('Excluir esta leitura?')) {
         data.leituras = data.leituras.filter(function (t) { return t.id !== id; });
         saveData();
+        renderTanques();
         showToast('Leitura excluída.');
       }
     }
@@ -1133,6 +1116,7 @@
     saveData();
     this.reset();
     document.getElementById('cylQty').value = 1;
+    renderCilindros();
     showToast('Cilindro(s) registrado(s).');
   });
 
@@ -1149,11 +1133,13 @@
       if (confirm('Excluir este registro?')) {
         data.cilindros = data.cilindros.filter(function (c) { return c.id !== id; });
         saveData();
+        renderCilindros();
         showToast('Registro excluído.');
       }
     } else if (action === 'toggle') {
       item.recolhido = !item.recolhido;
       saveData();
+      renderCilindros();
     }
   });
 
@@ -1166,13 +1152,13 @@
     if (list.length === 0) {
       occLogEl.innerHTML = '<div class="empty">Nenhuma ocorrência registrada.</div>';
     } else {
-      occLogEl.innerHTML = list.map(function (o) {
+      occLogEl.innerHTML = list.map(value => {
         return '' +
-          '<div class="entry occ-entry" data-id="' + o.id + '">' +
+          '<div class="entry occ-entry" data-id="' + value.id + '">' +
             '<div class="entry-top">' +
-              '<span class="entry-time">' + fmtTime(o.createdAt) + '</span>' +
+              '<span class="entry-time">' + fmtTime(value.createdAt) + '</span>' +
             '</div>' +
-            '<div class="entry-desc">' + escapeHtml(o.texto) + '</div>' +
+            '<div class="entry-desc">' + escapeHtml(value.texto) + '</div>' +
             '<div class="entry-bottom">' +
               '<span class="entry-actions">' +
                 '<button data-action="delete" class="danger">excluir</button>' +
@@ -1196,6 +1182,7 @@
     });
     saveData();
     this.reset();
+    renderOcorrencias();
     showToast('Ocorrência registrada.');
   });
 
@@ -1208,11 +1195,16 @@
       if (confirm('Excluir esta ocorrência?')) {
         data.ocorrencias = data.ocorrencias.filter(function (o) { return o.id !== id; });
         saveData();
+        renderOcorrencias();
         showToast('Ocorrência excluída.');
       }
     }
   });
 
+  renderPendencias();
+  renderTanques();
+  renderCilindros();
+  renderOcorrencias();
 })();
 </script>
 </body>
